@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artaneg - Version Directory</title>
+    <!-- Pixel Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'VT323', monospace;
+            image-rendering: pixelated;
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            padding: 16px 12px;
+            min-height: 100vh;
+        }
+
+        /* Container fluid wide layout */
+        .container {
+            width: 95%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Header Box */
+        .header {
+            border: 2px solid #00ff00;
+            box-shadow: 4px 4px 0px #005500;
+            padding: 14px 18px;
+            background-color: #000;
+        }
+
+        .header h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(0.75rem, 2vw, 1.3rem);
+            color: #ffcc00;
+            margin-bottom: 6px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .header p {
+            font-size: clamp(0.95rem, 1.5vw, 1.25rem);
+            color: #aaaaaa;
+        }
+
+        /* Directory Container */
+        .directory {
+            border: 2px solid #0066ff;
+            box-shadow: 4px 4px 0px #002288;
+            background-color: #000000;
+            padding: 14px 16px;
+        }
+
+        /* Directory Bar & Sort Controls */
+        .dir-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+            border-bottom: 2px dashed #222;
+            padding-bottom: 10px;
+        }
+
+        .dir-path {
+            color: #00ff00;
+            font-size: clamp(0.95rem, 1.5vw, 1.3rem);
+            word-break: break-all;
+        }
+
+        .sort-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sort-label {
+            color: #888888;
+            font-size: clamp(0.85rem, 1.3vw, 1.1rem);
+        }
+
+        .sort-btn {
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(0.5rem, 0.8vw, 0.7rem);
+            background-color: #111;
+            color: #ffcc00;
+            border: 1px solid #ffcc00;
+            padding: 4px 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sort-btn:active {
+            background-color: #ffcc00;
+            color: #000;
+        }
+
+        /* File List */
+        .file-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .file-card {
+            background-color: #0a0a0a;
+            border: 1px solid #333333;
+            transition: border-color 0.2s ease;
+            overflow: hidden;
+        }
+
+        .file-card:hover, .file-card.active {
+            border-color: #ffcc00;
+        }
+
+        /* Clickable Header */
+        .file-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: clamp(0.95rem, 1.5vw, 1.25rem);
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .file-icon {
+            color: #ff0033;
+            flex-shrink: 0;
+        }
+
+        .file-name {
+            color: #ffffff;
+            word-break: break-all;
+        }
+
+        /* Status & Version Labels */
+        .tag-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tag {
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(0.45rem, 0.7vw, 0.6rem);
+            padding: 2px 5px;
+            flex-shrink: 0;
+        }
+
+        .tag-latest { background-color: #00ff00; color: #000; }
+        .tag-stable { background-color: #00ccff; color: #000; }
+        .tag-beta   { background-color: #ff9900; color: #000; }
+        .tag-alpha  { background-color: #ff0055; color: #fff; }
+        .tag-proto  { background-color: #aa00ff; color: #fff; }
+
+        .file-meta-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+        }
+
+        .file-size {
+            color: #00ccff;
+            font-size: clamp(0.85rem, 1.3vw, 1.15rem);
+            white-space: nowrap;
+        }
+
+        .file-date {
+            color: #777777;
+            font-size: clamp(0.85rem, 1.3vw, 1.15rem);
+            white-space: nowrap;
+        }
+
+        .arrow-icon {
+            color: #ffcc00;
+            font-size: clamp(0.7rem, 1vw, 0.9rem);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .file-card.active .arrow-icon {
+            transform: rotate(90deg);
+        }
+
+        /* Desktop vs Mobile Tag Positioning */
+        @media (min-width: 600px) {
+            .tag-group.mobile-tags {
+                display: none;
+            }
+            .tag-group.desktop-tags {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 599px) {
+            .tag-group.mobile-tags {
+                display: flex;
+            }
+            .tag-group.desktop-tags {
+                display: none;
+            }
+        }
+
+        /* Expandable Content Drawer */
+        .file-details-wrapper {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: #050505;
+        }
+
+        .file-card.active .file-details-wrapper {
+            grid-template-rows: 1fr;
+            border-top: 1px dashed #333333;
+        }
+
+        .file-details-inner {
+            overflow: hidden;
+        }
+
+        .file-details-content {
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .changelog-box {
+            border: 1px solid #222;
+            padding: 10px 12px;
+            background-color: #000;
+        }
+
+        .changelog-box h4 {
+            color: #ff0033;
+            font-size: clamp(0.95rem, 1.4vw, 1.2rem);
+            margin-bottom: 4px;
+        }
+
+        .changelog-box ul {
+            list-style-type: square;
+            padding-left: 18px;
+            color: #ccc;
+            font-size: clamp(0.9rem, 1.3vw, 1.15rem);
+        }
+
+        .changelog-box li {
+            margin-bottom: 3px;
+        }
+
+        /* SHA256 Field */
+        .sha-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sha-label {
+            color: #00ff00;
+            font-size: clamp(0.85rem, 1.3vw, 1.1rem);
+        }
+
+        .sha-box {
+            display: flex;
+            align-items: center;
+            background-color: #111;
+            border: 1px solid #333;
+            padding: 6px 10px;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .sha-box:hover {
+            border-color: #ffcc00;
+            background-color: #161616;
+        }
+
+        .sha-hash {
+            font-size: clamp(0.85rem, 1.2vw, 1.05rem);
+            color: #aaa;
+            word-break: break-all;
+            flex-grow: 1;
+        }
+
+        .sha-copy-btn {
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(0.45rem, 0.7vw, 0.6rem);
+            background-color: #333;
+            color: #fff;
+            padding: 5px 8px;
+            border: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        /* Download Button */
+        .download-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(0.6rem, 1vw, 0.8rem);
+            text-align: center;
+            text-decoration: none;
+            color: #000;
+            background-color: #00ff00;
+            border: 2px solid #00ff00;
+            box-shadow: 3px 3px 0px #005500;
+            cursor: pointer;
+            margin-top: 2px;
+        }
+
+        .download-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #005500;
+        }
+
+        /* Toast Popup */
+        .toast-popup {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background-color: #000000;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            box-shadow: 4px 4px 0px #005500;
+            padding: 10px 18px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(0.55rem, 0.9vw, 0.75rem);
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .toast-popup.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        footer {
+            text-align: center;
+            color: #555555;
+            font-size: clamp(0.85rem, 1.2vw, 1.1rem);
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>ARRAY//404 Builds Archive</h1>
+            <p>Official Builds Archive</p>
+        </div>
+
+        <!-- Directory & Controls -->
+        <div class="directory">
+            <div class="dir-controls">
+                <span class="dir-path">Index of /artaneg/builds/</span>
+                
+                <div class="sort-wrapper">
+                    <span class="sort-label">SORT:</span>
+                    <button class="sort-btn" id="sortBtn" onclick="toggleSort()">LATEST ▼</button>
+                </div>
+            </div>
+            
+            <ul class="file-list" id="fileList">
+                <!-- Dynamically populated via JavaScript -->
+            </ul>
+        </div>
+
+        <footer>
+            © 2026 WackyDink. All rights reserved.
+        </footer>
+    </div>
+
+    <!-- Toast Notification Popup -->
+    <div id="toastPopup" class="toast-popup">CHECKSUM COPIED!</div>
+
+    <script>
+        // Data Registry with Sizes using MiB / GiB
+        const buildData = [
+            {
+                id: 'v200',
+                version: 'v2.0.0',
+                filename: 'Artaneg_v2.0.0.zip',
+                size: '1.15 GiB',
+                date: '2026-08-15',
+                labels: [
+                    { name: 'LATEST', class: 'tag-latest' },
+                    { name: 'STABLE', class: 'tag-stable' }
+                ],
+                sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+                changelog: [
+                    'Added major endgame boss fight mechanics.',
+                    'Overhauled rendering engine & fixed screen tearing.',
+                    'Added custom keybindings menu.'
+                ],
+                downloadUrl: '#download-v2.0.0'
+            },
+            {
+                id: 'v150',
+                version: 'v1.5.0',
+                filename: 'Artaneg_v1.5.0.zip',
+                size: '840.5 MiB',
+                date: '2026-05-10',
+                labels: [
+                    { name: 'BETA', class: 'tag-beta' }
+                ],
+                sha256: 'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e',
+                changelog: [
+                    'Introduced new enemy variants (Ranged/Flying).',
+                    'Added level 3 and expanded lore notes.',
+                    'Audio engine update with sound effect variations.'
+                ],
+                downloadUrl: '#download-v1.5.0'
+            },
+            {
+                id: 'v100',
+                version: 'v1.0.0',
+                filename: 'Artaneg_v1.0.0.zip',
+                size: '512.0 MiB',
+                date: '2026-01-20',
+                labels: [
+                    { name: 'ALPHA', class: 'tag-alpha' }
+                ],
+                sha256: '7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069',
+                changelog: [
+                    'Official initial release build.',
+                    'Complete 2-level campaign.'
+                ],
+                downloadUrl: '#download-v1.0.0'
+            },
+            {
+                id: 'v030',
+                version: 'v0.3.0',
+                filename: 'Artaneg_v0.3.0_proto.zip',
+                size: '128.4 MiB',
+                date: '2025-11-04',
+                labels: [
+                    { name: 'PROTOTYPE', class: 'tag-proto' }
+                ],
+                sha256: '8f41c23871ff2bc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d4001',
+                changelog: [
+                    'Implemented player movement and basic combat loop.',
+                    'Placeholder art assets test release.'
+                ],
+                downloadUrl: '#download-v0.3.0'
+            }
+        ];
+
+        let currentSortOrder = 'latest';
+        let toastTimeout;
+
+        function renderList() {
+            const listContainer = document.getElementById('fileList');
+            listContainer.innerHTML = '';
+
+            const sortedData = [...buildData].sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return currentSortOrder === 'latest' ? dateB - dateA : dateA - dateB;
+            });
+
+            sortedData.forEach(build => {
+                const li = document.createElement('li');
+                li.className = 'file-card';
+                li.id = `card-${build.id}`;
+
+                const changelogItems = build.changelog.map(item => `<li>${item}</li>`).join('');
+                const tagBadges = build.labels.map(lbl => `<span class="tag ${lbl.class}">${lbl.name}</span>`).join(' ');
+
+                li.innerHTML = `
+                    <div class="file-header" onclick="toggleExpand('card-${build.id}')">
+                        <div class="file-info">
+                            <span class="file-icon">[ZIP]</span>
+                            <span class="file-name">${build.filename}</span>
+                            <div class="tag-group mobile-tags">${tagBadges}</div>
+                        </div>
+                        <div class="file-meta-right">
+                            <div class="tag-group desktop-tags">${tagBadges}</div>
+                            <span class="file-size">${build.size}</span>
+                            <span class="file-date">${build.date}</span>
+                            <span class="arrow-icon">▶</span>
+                        </div>
+                    </div>
+                    
+                    <div class="file-details-wrapper">
+                        <div class="file-details-inner">
+                            <div class="file-details-content">
+                                <div class="changelog-box">
+                                    <h4>&gt; CHANGELOG:</h4>
+                                    <ul>${changelogItems}</ul>
+                                </div>
+
+                                <div class="sha-container">
+                                    <span class="sha-label">&gt; SHA256 CHECKSUM (CLICK TO COPY):</span>
+                                    <div class="sha-box" onclick="copySHA(this, '${build.sha256}')">
+                                        <span class="sha-hash">${build.sha256}</span>
+                                        <span class="sha-copy-btn">COPY</span>
+                                    </div>
+                                </div>
+
+                                <a href="${build.downloadUrl}" class="download-btn">DOWNLOAD BUILD (${build.size})</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                listContainer.appendChild(li);
+            });
+        }
+
+        // Accordion Expansion
+        function toggleExpand(cardId) {
+            const selectedCard = document.getElementById(cardId);
+            const isActive = selectedCard.classList.contains('active');
+            
+            document.querySelectorAll('.file-card').forEach(card => card.classList.remove('active'));
+            
+            if (!isActive) {
+                selectedCard.classList.add('active');
+            }
+        }
+
+        // Toggle Sort Direction
+        function toggleSort() {
+            const btn = document.getElementById('sortBtn');
+            if (currentSortOrder === 'latest') {
+                currentSortOrder = 'oldest';
+                btn.innerText = 'OLDEST ▲';
+            } else {
+                currentSortOrder = 'latest';
+                btn.innerText = 'LATEST ▼';
+            }
+            renderList();
+        }
+
+        // Toast Popup
+        function triggerToast() {
+            const popup = document.getElementById('toastPopup');
+            popup.classList.add('show');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                popup.classList.remove('show');
+            }, 1800);
+        }
+
+        // Clipboard Copying
+        function copySHA(containerElem, textToCopy) {
+            const showFeedback = () => {
+                const btn = containerElem.querySelector('.sha-copy-btn');
+                const originalText = btn.innerText;
+                
+                btn.innerText = 'COPIED!';
+                btn.style.backgroundColor = '#00ff00';
+                btn.style.color = '#000000';
+
+                triggerToast();
+
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = '#333';
+                    btn.style.color = '#fff';
+                }, 1800);
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showFeedback();
+                }).catch(() => {
+                    fallbackCopy(textToCopy, showFeedback);
+                });
+            } else {
+                fallbackCopy(textToCopy, showFeedback);
+            }
+        }
+
+        function fallbackCopy(text, callback) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                callback();
+            } catch (err) {
+                console.error('Copy failed', err);
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        renderList();
+    </script>
+</body>
+</html>
